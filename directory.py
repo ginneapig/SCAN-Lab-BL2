@@ -13,6 +13,7 @@ class Directory:
         self._subfiles = [] # holds String objects
         self._subdirs = []  # holds Directory objects
         self._super_dir = super_dir
+        self._filelines = 0 # for Excel sheet
     
     def name(self):
         '''Returns string of directory name.'''
@@ -21,7 +22,11 @@ class Directory:
     def num_files(self):
         '''Returns integer representing number of files in the directory.'''
         return len(self._subfiles)
-
+    
+    def subfiles(self):
+        '''Returns list of subfiles.'''
+        return [subfile_name for subfile in self._subfiles]
+    
     def add_subfile(self, subfile):
         '''Takes a string name of subfile and adds it to the list.'''
         self._subfiles.append(subfile)
@@ -36,7 +41,11 @@ class Directory:
         return len(self._subdirs)
     
     def subdirs(self):
-        '''Returns list of names of subdirectories.'''
+        '''Returns list of subdirectory objects.'''
+        return [subdir for subdir in self._subdirs]
+
+    def subdir_names(self):
+        '''Returns list of strings of the names of subdirectories.'''
         return [subdir.name() for subdir in self._subdirs]
 
     def add_subdir(self, subdir):
@@ -60,3 +69,14 @@ class Directory:
         if (self._super_dir != None):
             return self._super_dir
         return 'No super directory. This is the root directory.'
+
+    def filelines(self):
+        '''Return the attribute referring to the number of empty lines
+        that go below this directory's name to allow for proper spacing
+        between directories in the sheet.'''
+        return self._filelines
+
+    def set_fileline(self, count):
+        '''Set the number of empty filelines below this directory name.'''
+        self._fileline = count
+

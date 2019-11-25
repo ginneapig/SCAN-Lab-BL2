@@ -1,37 +1,45 @@
-# list_directory2.py that creates objects for each directory encountered.
-# meant for ease of accessing attributes about a directory.
-# This script must exist directly inside of the starting directory.
+'''This program creates objects for each directory encountered using directory.py,
+meant for ease of accessing attributes about a directory. It (should) then 
+organizes and creates an Excel sheet of all directories with subdirectories 
+and subfiles in a horizontal format.
+
+This script must exist directly inside of the starting/root directory. 
+It accesses all items inside using the os.listdir(path) function.
+
+Apparently os.scandir() is fastest and least expensive. Personally 
+found difficulty in accessing root directory, however, unless script is placed 
+outside of root directory -- in which case there then needs to be more
+maneuvering to locate the correct directory this script should target.'''
 
 from directory import Directory # imports Directory class
 
 import os
 
 def main():
-    directory = os.getcwd()
-    root_name = os.path.basename(directory.strip('/'))
+    dir_path = os.getcwd()
+    root_name = os.path.basename(dir_path)
+    root_dir = Directory(root_name) # initialize root Directory object
 
-    root_dir = Directory(root_name)
-    check_directory(root_dir)
-
-    print(root_dir.subdirs())
+    check_directory(dir_path, root_dir)
+    
 
 
-def get_root_dir():
-    script_path = os.getcwd()
-    script_dir = os.path.basename
+def check_directory(dir_path, root_dir):
+    '''Takes in a Directory object to traverse all items within it 
+    and call this function recursively until all Directory objects
+    are initialized and completed.'''
+    for entry in os.listdir(dir_path): # entry is a String
+        entry_path = os.path.join(dir_path, entry)
+        if (not entry.startswith('.')):
+            if (os.path.isdir(entry_path)): 
+                new_dir = Directory(entry, root_dir)
+                root_dir.add_subdir(new_dir)
+                check_directory(entry_path, new_dir) # directories recursively created
+            elif (os.path.isfile(entry_path)):
+                root_dir.add_subfile(entry)
 
-def check_directory(root_dir):
-    '''Takes in the root Directory object to traverse all items
-    within it and call this function recursively until all Directory objects
-    have been created and implemented.'''
-    for entry in os.scandir(root_dir.name()): 
-        if (not entry.name.startswith('.')):
-            if(entry.is_dir()):
-                new_dir = Directory(entry.name, root_dir)
-                root_dir.add_subdir()
-                check_directory(new_dir) # recursive call
-            elif (entry.is_file()):
-                root_dir.add_subfile(entry.name)
+def create_sheet():
+    pass
 
 
 main()
