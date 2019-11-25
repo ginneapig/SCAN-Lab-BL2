@@ -19,6 +19,10 @@ class Directory:
         '''Returns string of directory name.'''
         return self._name
 
+    def num_items(self):
+        '''Returns integer representing number of files and folders in the directory.'''
+        return len(self._subfiles) + len(self._subdirs)
+
     def num_files(self):
         '''Returns integer representing number of files in the directory.'''
         return len(self._subfiles)
@@ -76,7 +80,7 @@ class Directory:
         between directories in the sheet.'''
         return self._filelines
 
-    def set_fileline(self, count):
+    def set_filelines(self, count):
         '''Set the number of empty filelines below this directory name.'''
         self._fileline = count
 

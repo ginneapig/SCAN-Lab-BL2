@@ -21,14 +21,13 @@ def main():
     root_dir = Directory(root_name) # initialize root Directory object
 
     check_directory(dir_path, root_dir)
-    
-
+    structure_spaces(root_dir)
 
 def check_directory(dir_path, root_dir):
     '''Takes in a Directory object to traverse all items within it 
     and call this function recursively until all Directory objects
     are initialized and completed.'''
-    for entry in os.listdir(dir_path): # entry is a String
+    for entry in os.listdir(dir_path): # "entry" is a String
         entry_path = os.path.join(dir_path, entry)
         if (not entry.startswith('.')):
             if (os.path.isdir(entry_path)): 
@@ -38,8 +37,12 @@ def check_directory(dir_path, root_dir):
             elif (os.path.isfile(entry_path)):
                 root_dir.add_subfile(entry)
 
-def create_sheet():
-    pass
-
+def structure_spaces(root_dir):
+    if (not root_dir.subdirs()): # subdirectory list is empty
+        root_dir.set_filelines(root_dir.num_items - 1)
+        return root_dir.num_items() - 1
+    else:
+        pass
+        # figure out recursion dude.
 
 main()
