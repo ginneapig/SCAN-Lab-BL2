@@ -31,7 +31,7 @@ class Directory:
     
     def subfiles(self):
         '''Returns list of subfiles.'''
-        return [subfile_name for subfile in self._subfiles]
+        return [subfile for subfile in self._subfiles]
     
     def add_subfile(self, subfile):
         '''Takes a string name of subfile and adds it to the list.'''
@@ -73,7 +73,7 @@ class Directory:
         '''Returns string of super directory name, or None if there is no
         super directory.'''
         if (self._super_dir != None):
-            return self._super_dir
+            return self._super_dir.name()
         return None
 
     def filelines(self):
@@ -91,9 +91,14 @@ class Directory:
         '''Remove any number of filelines.'''
         self._filelines -= count
 
-    def print_tree(self, count):
-        os.system('tabs -4')
-        print(count, '\t'*count, self._name)
+    def print_tree(self, count, files=False):
+        '''Prints directory tree into terminal. Unless indicated by user, 
+        does not print files.
+        PARAM: count for tabbing, boolean for printing files or not'''
+        os.system('tabs -4') # sets tabs for homogeneity
+        print(count, '\t'*count, self._name + '/')
         for subdir in self._subdirs:
-            subdir.print_tree(count + 1)
-
+            subdir.print_tree(count + 1, files)
+        if (files): # want to print files
+            for fil in self._subfiles:
+                print(count, '\t'*(count+1), fil)

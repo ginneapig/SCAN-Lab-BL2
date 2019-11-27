@@ -5,3 +5,4 @@ test/
 # Files #
 list_directory.py
 .DS_Store
+scan-lab-bl2.csv
