@@ -23,8 +23,10 @@ def main():
     check_directory(dir_path, root_dir)
     structure_spaces(root_dir)
 
+    # root_dir.print_tree(0)
+
 def check_directory(dir_path, root_dir):
-    '''Takes in a Directory object to traverse all items within it 
+    '''Takes in a path and a Directory object to traverse all items within it 
     and call this function recursively until all Directory objects
     are initialized and completed.'''
     for entry in os.listdir(dir_path): # "entry" is a String
@@ -38,11 +40,27 @@ def check_directory(dir_path, root_dir):
                 root_dir.add_subfile(entry)
 
 def structure_spaces(root_dir):
+    '''Recursively adds counts of items to each directory with use
+    of a helper function. Removes one line at the end to account for one item
+    being on the same line as the directory name.
+    PARAM: Directory object'''
     if (not root_dir.subdirs()): # subdirectory list is empty
-        root_dir.set_filelines(root_dir.num_items - 1)
-        return root_dir.num_items() - 1
+        to_add = root_dir.num_items()
+        # root_dir.add_filelines(root_dir.num_items - 1)
+        add_upwards(root_dir, to_add)
     else:
-        pass
-        # figure out recursion dude.
+        for subdir in root_dir.subdirs():
+            structure_spaces(subdir)
+        root_dir.remove_filelines(1)    # after loop, added all subdirectories' counts
+
+
+def add_upwards(curr_dir, to_add):
+    '''Helper function for structure_spaces(root_dir).
+    Recursively adds the same number of items to each super directory.
+    PARAM: current Directory object, int representing number of items'''
+    curr_dir.add_filelines(to_add)
+    while (not curr_dir.super_dir()): # if super directory exists
+        add_upwards(curr_dir.super_dir(), to_add)
+
 
 main()

@@ -1,6 +1,8 @@
 # This file declares the Directory class for ease of accessing
 # various attributes about directories when creating an Excel file.
 
+import os
+
 class Directory:
     def __init__(self, name, super_dir=None):
         '''Initializes Directory object. Super directory optional.
@@ -72,7 +74,7 @@ class Directory:
         super directory.'''
         if (self._super_dir != None):
             return self._super_dir
-        return 'No super directory. This is the root directory.'
+        return None
 
     def filelines(self):
         '''Return the attribute referring to the number of empty lines
@@ -80,7 +82,18 @@ class Directory:
         between directories in the sheet.'''
         return self._filelines
 
-    def set_filelines(self, count):
-        '''Set the number of empty filelines below this directory name.'''
-        self._fileline = count
+    def add_filelines(self, count):
+        '''Add to the number of empty filelines that will go below 
+        this directory name in the Excel.'''
+        self._filelines += count
+
+    def remove_filelines(self, count):
+        '''Remove any number of filelines.'''
+        self._filelines -= count
+
+    def print_tree(self, count):
+        os.system('tabs -4')
+        print(count, '\t'*count, self._name)
+        for subdir in self._subdirs:
+            subdir.print_tree(count + 1)
 
