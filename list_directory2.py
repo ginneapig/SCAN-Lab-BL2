@@ -22,14 +22,13 @@ def main():
     root_dir = Directory(root_name) # initialize root Directory object
 
     check_directory(dir_path, root_dir)
-    structure_spaces(root_dir)
+    #may delete structure_spaces() and add_upwards() fxns
+    # structure_spaces(root_dir) 
 
-    # root_dir.print_tree(0)
+    # root_dir.print_tree(0, True) # uncomment for printing to terminal
     csv_file = open(root_name + '.csv', 'w')
     csv_writer = csv.writer(csv_file, delimiter=',')
     create_csv(csv_writer, root_dir, 0)
-
-
 
 
 def check_directory(dir_path, root_dir):
@@ -59,7 +58,6 @@ def structure_spaces(root_dir):
         for subdir in root_dir.subdirs():
             structure_spaces(subdir)
         if (root_dir.num_items() != 0):
-            print(root_dir.num_items())
             root_dir.remove_filelines(1)    # after loop, added all subdirectories' counts
 
 def add_upwards(curr_dir, to_add):
@@ -67,23 +65,27 @@ def add_upwards(curr_dir, to_add):
     Recursively adds the same number of items to each super directory.
     PARAM: current Directory object, int representing number of items'''
     curr_dir.add_filelines(to_add)
-    print(curr_dir.super_dir())
     while (not curr_dir.super_dir()): # if super directory exists
         add_upwards(curr_dir.super_dir(), to_add)
 
 def create_csv(csv_writer, root_dir, count):
+    '''Writes the CSV file. Recursively passes in each subdirectory.
+    PARAM: CSV writer tool from csv library, Directory object representing root
+        directory, int representing level at which file or folder is at in the tree.
+    RETURN: none'''
     curr_line = []
     curr_line.extend(['' for i in range(count)])
     curr_line.append(root_dir.name() + '/')
-    csv_writer.writerow(curr_line)
+    csv_writer.writerow(curr_line)   # holds only one directory name
 
     for subdir in root_dir.subdirs():
-        create_csv(csv_writer, subdir, count + 1)
+        # recursive call allows for items in each folder written immediately after folder name
+        create_csv(csv_writer, subdir, count + 1) 
 
     for subfile in root_dir.subfiles():
         file_line = []
-        file_line.extend(['' for i in range(count)])
+        file_line.extend(['' for i in range(count+1)]) # files always one indent more
         file_line.append(subfile)
-        csv_writer.writerow(file_line)
+        csv_writer.writerow(file_line) # holds only one file name
 
 main()
