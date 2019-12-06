@@ -13,12 +13,14 @@ maneuvering to locate the correct directory this script must target.'''
 
 import os
 import csv
+import string   # may not need, was orig. using for detecting symbols
 from directory import Directory # imports Directory class
 # from xlsxwriter import Workbook #v1.2.5 
 
 def main():
     dir_path = os.getcwd()
-    root_name = os.path.basename(dir_path)
+    root_name = fix_root_name(dir_path)
+
     root_dir = Directory(root_name) # initialize root Directory object
 
     check_directory(dir_path, root_dir)
@@ -32,6 +34,19 @@ def main():
     create_csv(csv_writer, root_dir, 0, count_names)
     
     # show_counts(count_names)
+    
+def fix_root_name(dir_path):
+    '''Pulls root name from os library basename() function and lowercases
+    as well as adds underscores between words.
+    PARAM: directory path
+    RETURN: string representing CSV tree file name'''
+    root_name = os.path.basename(dir_path).split()
+    fixed_root = ''
+    for word in root_name:
+        word = word.lower()
+        fixed_root += word + '_'
+    
+    return fixed_root.strip('_')
 
 def check_directory(dir_path, root_dir):
     '''Takes in a path and a Directory object to traverse all items within it 
@@ -49,7 +64,7 @@ def check_directory(dir_path, root_dir):
 
 def structure_spaces(root_dir):
     ##may remove
-    '''Recursively adds counts of items to each directory with use
+    '''Recursive function: recursively adds counts of items to each directory with use
     of a helper function. Removes one line at the end to account for one item
     being on the same line as the directory name.
     PARAM: Directory object'''
@@ -65,7 +80,7 @@ def structure_spaces(root_dir):
 
 def add_upwards(curr_dir, to_add):
     ##may remove
-    '''Helper function for structure_spaces(root_dir).
+    '''Helper function: for structure_spaces(root_dir).
     Recursively adds the same number of items to each super directory.
     PARAM: current Directory object, int representing number of items'''
     curr_dir.add_filelines(to_add)
@@ -73,21 +88,27 @@ def add_upwards(curr_dir, to_add):
         add_upwards(curr_dir.super_dir(), to_add)
 
 def create_csv(csv_writer, root_dir, count, count_names):
-    '''Writes the CSV file. Recursively passes in each subdirectory.
+    '''Recursive: writes the CSV file. Recursively passes in each subdirectory.
     PARAM: CSV writer tool from csv library, Directory object representing root
         directory, int representing level at which file or folder is at in the tree.
     RETURN: none'''
+    if (root_dir.name().startswith('-')):
+        root_dir_name = '\'' + root_dir.name() # prevents Excel from reading as operation
+    else:
+        root_dir_name = root_dir.name()
     curr_line = []
     curr_line.extend(['' for i in range(count)])
-    curr_line.append(root_dir.name() + '/')
+    curr_line.append(root_dir_name + '/')
     csv_writer.writerow(curr_line)   # holds only one directory name
 
     for subdir in root_dir.subdirs():
-        counting_helper(count_names, subdir.name() + '/')
+        counting_helper(count_names, subdir.name() + '/') # not part of main CSV creation
         # recursive call allows for items in each folder written immediately after folder name
         create_csv(csv_writer, subdir, count + 1, count_names) 
 
     for subfile in root_dir.subfiles():
+        if (subfile.startswith('-')): # prevents Excel from reading as operation
+            subfile = '\'' + subfile
         counting_helper(count_names, subfile)
         file_line = []
         file_line.extend(['' for i in range(count+1)]) # files always one indent more
@@ -95,7 +116,7 @@ def create_csv(csv_writer, root_dir, count, count_names):
         csv_writer.writerow(file_line) # holds only one file name
 
 def counting_helper(count_names, name):
-    '''Helps count number of times a name occurs.
+    '''Helper function: for create_csv(), count number of times a name occurs.
     PARAM: dictionary to hold counts, string for directory or file name.
     RETURN: none'''
     if name in count_names:
@@ -108,7 +129,7 @@ def show_counts(count_names):
     May make it print the whole file pathway, unsure how that's going to go.
     PARAM: dictionary holding names and counts.
     RETURN: none'''
-    csv_file2 = open('counts.csv', 'w')
+    csv_file2 = open('_counts.csv', 'w')
     csv_writer = csv.writer(csv_file2, delimiter=',')
 
     repeat = input('Display all files/folders or only those repeated? ')
