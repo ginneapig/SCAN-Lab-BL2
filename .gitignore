@@ -6,4 +6,4 @@ test/
 list_directory.py
 .DS_Store
 scan-lab-bl2.csv
-counts.csv
+scan-lab-bl2_counts.csv

@@ -1,40 +1,54 @@
 '''This program creates objects for each directory encountered using directory.py,
-meant for ease of accessing attributes about a directory. It (should) then 
-organizes and creates an Excel sheet of all directories with subdirectories 
+meant for ease of accessing attributes about a directory. It (should) then
+organizes and creates an Excel sheet of all directories with subdirectories
 and subfiles in a horizontal format.
 
-This script must exist directly inside of the starting/root directory. 
+This script must exist directly inside of the starting/root directory.
 It accesses all items inside using the os.listdir(path) function.
 
-Apparently os.scandir() is fastest and least expensive. Personally 
-found difficulty in accessing root directory, however, unless script is placed 
+Apparently os.scandir() is fastest and least expensive. Personally
+found difficulty in accessing root directory, however, unless script is placed
 outside of root directory -- in which case there then needs to be more
-maneuvering to locate the correct directory this script must target.'''
+maneuvering to locate the correct directory this script must target.
+
+Helper functions are always listed underneath the function they're called by.'''
 
 import os
 import csv
 import string   # may not need, was orig. using for detecting symbols
+
+# from xlsxwriter import Workbook #v1.2.5
+
 from directory import Directory # imports Directory class
-# from xlsxwriter import Workbook #v1.2.5 
+from dir_file import File
+
 
 def main():
     dir_path = os.getcwd()
     root_name = fix_root_name(dir_path)
-
-    root_dir = Directory(root_name) # initialize root Directory object
+    root_dir = Directory(root_name, dir_path) # initialize root Directory object
 
     check_directory(dir_path, root_dir)
-    # structure_spaces(root_dir) # currently unnecessary 
 
-    # root_dir.print_tree(0, True) # uncomment for printing to terminal
+    method = input('1 - Print to the terminal\n2 - Print to a CSV\nSelect an option: ')
+    if (method == '1'):
+        root_dir.print_tree(0, True) # uncomment for printing to terminal
+    elif (method == '2'):
+        counts_dict = {} # only stores strings, not objects
+        # initialize file and writer outside of recursive writing fxn
+        csv_file = open(root_name + '.csv', 'w') 
+        csv_writer = csv.writer(csv_file, delimiter=',') 
+        write_tree_csv(csv_writer, root_dir, 0, counts_dict)
+        
+        # sort_method = input('1 - Print alphabetically.\n2 - idk. Select an option: ')
+        sort_method = '1' #temp
+        if (sort_method == '1'):
+            alpha_counts_dict = alphabet_sort(root_name, counts_dict)
+            counts_file(root_name, alpha_counts_dict)
+    else:
+        print('Incorrect input. Please run the program again.')
 
-    count_names = {}
-    csv_file = open(root_name + '.csv', 'w')
-    csv_writer = csv.writer(csv_file, delimiter=',')
-    create_csv(csv_writer, root_dir, 0, count_names)
-    
-    # show_counts(count_names)
-    
+
 def fix_root_name(dir_path):
     '''Pulls root name from os library basename() function and lowercases
     as well as adds underscores between words.
@@ -44,102 +58,113 @@ def fix_root_name(dir_path):
     fixed_root = ''
     for word in root_name:
         word = word.lower()
-        fixed_root += word + '_'
-    
-    return fixed_root.strip('_')
+        fixed_root += word + '-'
+
+    return fixed_root.strip('-')
+
 
 def check_directory(dir_path, root_dir):
-    '''Takes in a path and a Directory object to traverse all items within it 
+    '''Takes in a path and a Directory object to traverse all items within it
     and call this function recursively until all Directory objects
     are initialized and completed.'''
     for entry in os.listdir(dir_path): # "entry" is a String
         entry_path = os.path.join(dir_path, entry)
         if (not entry.startswith('.')):
-            if (os.path.isdir(entry_path)): 
-                new_dir = Directory(entry, root_dir)
+            if (os.path.isdir(entry_path)):
+                new_dir = Directory(entry, entry_path, root_dir)
                 root_dir.add_subdir(new_dir)
                 check_directory(entry_path, new_dir) # directories recursively created
             elif (os.path.isfile(entry_path)):
-                root_dir.add_subfile(entry)
+                new_file = File(entry, entry_path, root_dir)
+                root_dir.add_subfile(new_file)
 
-def structure_spaces(root_dir):
-    ##may remove
-    '''Recursive function: recursively adds counts of items to each directory with use
-    of a helper function. Removes one line at the end to account for one item
-    being on the same line as the directory name.
-    PARAM: Directory object'''
-    if (not root_dir.subdirs()): # subdirectory list is empty
-        to_add = root_dir.num_items()
-        # root_dir.add_filelines(root_dir.num_items - 1)
-        add_upwards(root_dir, to_add)
-    else:
-        for subdir in root_dir.subdirs():
-            structure_spaces(subdir)
-        if (root_dir.num_items() != 0):
-            root_dir.remove_filelines(1)    # after loop, added all subdirectories' counts
 
-def add_upwards(curr_dir, to_add):
-    ##may remove
-    '''Helper function: for structure_spaces(root_dir).
-    Recursively adds the same number of items to each super directory.
-    PARAM: current Directory object, int representing number of items'''
-    curr_dir.add_filelines(to_add)
-    while (not curr_dir.super_dir()): # if super directory exists
-        add_upwards(curr_dir.super_dir(), to_add)
-
-def create_csv(csv_writer, root_dir, count, count_names):
-    '''Recursive: writes the CSV file. Recursively passes in each subdirectory.
+def write_tree_csv(csv_writer, root_dir, level, counts_dict):
+    '''Recursive: writes the tree CSV file. Recursively passes in each subdirectory.
     PARAM: CSV writer tool from csv library, Directory object representing root
         directory, int representing level at which file or folder is at in the tree.
     RETURN: none'''
-    if (root_dir.name().startswith('-')):
-        root_dir_name = '\'' + root_dir.name() # prevents Excel from reading as operation
-    else:
-        root_dir_name = root_dir.name()
+    root_dir_name = get_string_name(root_dir) 
     curr_line = []
-    curr_line.extend(['' for i in range(count)])
+    curr_line.extend(['' for i in range(level)])
     curr_line.append(root_dir_name + '/')
     csv_writer.writerow(curr_line)   # holds only one directory name
 
     for subdir in root_dir.subdirs():
-        counting_helper(count_names, subdir.name() + '/') # not part of main CSV creation
-        # recursive call allows for items in each folder written immediately after folder name
-        create_csv(csv_writer, subdir, count + 1, count_names) 
+        counting_helper(counts_dict, subdir) # not part of main CSV creation
+        write_tree_csv(csv_writer, subdir, level + 1, counts_dict) # recursive call
 
     for subfile in root_dir.subfiles():
-        if (subfile.startswith('-')): # prevents Excel from reading as operation
-            subfile = '\'' + subfile
-        counting_helper(count_names, subfile)
+        counting_helper(counts_dict, subfile)
+        subfile_name = get_string_name(subfile) # calls helper
         file_line = []
-        file_line.extend(['' for i in range(count+1)]) # files always one indent more
-        file_line.append(subfile)
+        file_line.extend(['' for i in range(level+1)]) # files always one indent more
+        file_line.append(subfile_name)
         csv_writer.writerow(file_line) # holds only one file name
 
-def counting_helper(count_names, name):
-    '''Helper function: for create_csv(), count number of times a name occurs.
-    PARAM: dictionary to hold counts, string for directory or file name.
-    RETURN: none'''
-    if name in count_names:
-        count_names[name] += 1
-    else: 
-        count_names[name] = 1
+def get_string_name(entry):
+    '''Helper function: for write_tree_csv(), both Directory and File classes 
+    have .name() function to return String of Directory or File name. Checks symbol(s).
+    PARAM: Directory or File object
+    RETURN: string name of object'''
+    if (entry.name().startswith('-')):
+        entry_name = '\'' + entry.name() # prevents Excel from reading as operation
+    else:
+        entry_name = entry.name()
+    return entry_name
 
-def show_counts(count_names):
-    '''Creates a second CSV for showing the count of all repeated items.
-    May make it print the whole file pathway, unsure how that's going to go.
-    PARAM: dictionary holding names and counts.
+def counting_helper(counts_dict, entry):
+    '''Helper function: for write_tree_csv(), add object to string key.
+    Note: directory names have '/' appended automatically when .name() called.
+    PARAM: dictionary to hold names keyed to list of objects, Directory or File object.
     RETURN: none'''
-    csv_file2 = open('_counts.csv', 'w')
+    if entry.name() in counts_dict:
+        counts_dict[entry.name()].append(entry)
+    else:
+        counts_dict[entry.name()] = [entry]
+
+
+def alphabet_sort(root_name, counts_dict):
+    '''Sorts dictionary of file and directory names alphabetically.
+    Calls counts_file() to create the CSV.
+    PARAM: string name of root to pass to counts_file(), dictionary of counts.
+    RETURN: none'''
+    dirs = {}
+    files = {}
+    for name in counts_dict:
+        if (name[-1] == '/'):
+            dirs[name] = counts_dict[name] # still string keyed to lists
+        else:
+            files[name] = counts_dict[name]
+
+    # separate dictionaries, sorted
+    sorted_dirs = {k:v for k,v in sorted(dirs.items(), key=lambda item:item[0])}
+    sorted_files = {k:v for k,v in sorted(files.items(), key=lambda item:item[0])}
+    
+    sorted_dirs.update(sorted_files)    # combine separate dictionaries again
+    return sorted_dirs
+
+
+def counts_file(root_name, counts_dict):
+    '''Helper: for all sorting fxns, creates a CSV for showing the count of all 
+    repeated items. Option to print all items or option to print items with greater than 
+    one repetition, which also prints the pathways of all objects with the same name.
+    PARAM: dictionary holding names and counts, sorted in different ways.
+    RETURN: none'''
+    csv_file2 = open(root_name + '_counts.csv', 'w')
     csv_writer = csv.writer(csv_file2, delimiter=',')
 
-    repeat = input('Display all files/folders or only those repeated? ')
-    if ('all' in repeat.lower()):
-        for item in count_names.items():
-            csv_writer.writerow([item[0], item[1]])
+    repeat = input('1 - Display all files/folders\n2 - Display only those repeated\nSelect an option: ')
+    if (repeat == '1'):
+        for item in counts_dict.items():
+            csv_writer.writerow([item[0], len(item[1])])
 
-    else: # only print repeated ones
-        for item in count_names.items():
-            if (item[1] > 1):
-                csv_writer.writerow([item[0], item[1]])
+    elif (repeat == '2'): # only print repeated ones with pathways
+        for item in counts_dict.items():
+            if (len(item[1]) > 1):
+                csv_writer.writerow([item[0], len(item[1])])
+                for entry in item[1]:
+                    csv_writer.writerow(['', entry.pathway()])
+
 
 main()
