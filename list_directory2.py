@@ -19,8 +19,8 @@ import string   # may not need, was orig. using for detecting symbols
 
 # from xlsxwriter import Workbook #v1.2.5
 
-from directory import Directory # imports Directory class
-from dir_file import File
+from directory_class import Directory # imports Directory class
+from file_class import File
 
 
 def main():
