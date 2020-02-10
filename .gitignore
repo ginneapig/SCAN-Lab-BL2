@@ -1,7 +1,6 @@
 # Folders #
 __pycache__/
 test/
-scan-lab-env/
 TG_Scripts/ 
 
 # Files #
